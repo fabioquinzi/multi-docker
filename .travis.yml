@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t fabioq/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true fabioq/react-test npm test
+
+after_success:
+  - docker build -t fabioq/multi-client ./client
+  - docker build -t fabioq/multi-nginx ./nginx
+  - docker build -t fabioq/multi-server ./server
+  - docker build -t fabioq/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login - u "$DOCKER_ID" --password-stdin
+  # Ship images to docker hub
+  - docker push fabioq/multi-client
+  - docker push fabioq/multi-nginx
+  - docker push fabioq/multi-server
+  - docker push fabioq/multi-worker
